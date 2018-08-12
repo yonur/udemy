@@ -28,3 +28,20 @@
 #define DATAZ1         0x37  //R   00000000  Z-Axis Data 1 
 #define FIFO_CTL       0x38  //R/W 00000000  FIFO control 
 #define FIFO_STATUS    0x39  //R   00000000  FIFO status 
+
+//Set the LOW_POWER bit in the BW_RATE register
+void adxl345_LowPowerMode(void) {
+  
+}
+
+//Clear the Measure bit in the POWER_CTL register
+void adxl345_StandbyMode(void) {
+
+}
+
+//If clear SPI bit in the DATA_FORMAT register -> 4-wire mode
+//If set SPI bit in the DATA_FORMAT register -> 3-wire mode
+void adxl345_SetSpi_Mode(void) {
+
+
+}
