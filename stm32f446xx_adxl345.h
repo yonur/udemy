@@ -1,5 +1,8 @@
-#ifndef __ADXL345_H
-#define __ADXL345_H
+#ifndef ASDXL345_STM32F446XX_H
+#define ASDXL345_STM32F446XX_H
+
+#include "stm32f4xx_hal.h"
+#include <stdint.h> 
 
 #define DEVID          0x00  //R   11100101  Device ID 
 #define THRESH_TAP     0x1D  //R/W 00000000  Tap threshold 
@@ -87,12 +90,38 @@
 #define ADXL345_INT1_PIN		0x00		//INT1: 0
 #define ADXL345_INT2_PIN		0x01		//INT2: 1
 
+/********************** INTERRUPT BIT POSITION **********************/
+#define ADXL345_INT_DATA_READY_BIT		0x07
+#define ADXL345_INT_SINGLE_TAP_BIT		0x06
+#define ADXL345_INT_DOUBLE_TAP_BIT		0x05
+#define ADXL345_INT_ACTIVITY_BIT		0x04
+#define ADXL345_INT_INACTIVITY_BIT		0x03
+#define ADXL345_INT_FREE_FALL_BIT		0x02
+#define ADXL345_INT_WATERMARK_BIT		0x01
+#define ADXL345_INT_OVERRUNY_BIT		0x00
+
+#define ADXL345_DATA_READY				0x07
+#define ADXL345_SINGLE_TAP				0x06
+#define ADXL345_DOUBLE_TAP				0x05
+#define ADXL345_ACTIVITY				0x04
+#define ADXL345_INACTIVITY				0x03
+#define ADXL345_FREE_FALL				0x02
+#define ADXL345_WATERMARK				0x01
+#define ADXL345_OVERRUNY				0x00
+
+
+ /****************************** ERRORS ******************************/
+#define ADXL345_OK			1		// No Error
+#define ADXL345_ERROR		0		// Error Exists
+
+#define ADXL345_NO_ERROR	0		// Initial State
+#define ADXL345_READ_ERROR	1		// Accelerometer Reading Error
+#define ADXL345_BAD_ARG		2		// Bad Argument
 
 //Action bits
 #define LOW_POWER      0x10
 
-#include "stm32f4xx_hal.h"
-#include <stdint.h> 
+uint8_t rec_buf[6];
 
 //Set the LOW_POWER bit in the BW_RATE register
 void adxl345_LowPowerMode(SPI_HandleTypeDef spi);
@@ -106,12 +135,31 @@ void adxl345_SetSpi_Mode(void);
 
 //To get device id
 void adxl345_devID(SPI_HandleTypeDef spi);
-
 	
 void adxl345_Write(SPI_HandleTypeDef spi, uint8_t reg, uint8_t *value, uint8_t data_len);
 
-
 void adxl345_Read(SPI_HandleTypeDef spi, uint8_t reg, uint8_t *data_buf, uint8_t data_len);
 
+//ADXL345 güç ayarlari
+void adxl345_PowerOn(SPI_HandleTypeDef spi);
+
+//Accelerasyon degerini okumak için
+void adxl345_ReadAcceleration(SPI_HandleTypeDef spi, uint8_t * x, uint8_t *y, uint8_t *z); 
+
+//Istenen registerin istenen bitini birlemek veya sifirlamak için kullanilan method
+void adxl345_SetRegisterBit(SPI_HandleTypeDef *spi, uint8_t reg, uint8_t bit_pos, uint8_t state);
+
+//Istenen registerin istenen bitinin durumunu ögrenmek için kullanilan method
+uint8_t adxl345_GetRegisterBit(SPI_HandleTypeDef *spi,  uint8_t reg, uint8_t bit_pos);
+
+//Interrupt source'u ögrenmek için
+uint8_t adxl345_GetInterruptSource(SPI_HandleTypeDef *spi, uint8_t interruptBitPos);
+
+/**********************INTERRUPT MAPPING************************************/
+//Interrupt mapping'i pin 1 yada pin 2'ye set etmek için kullanilir
+void adxl345_SetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit, uint8_t interrupt_pin);
+
+//Interrupt mapping'teki interruptlari tek tek pin 1 yada pin 2'ye seçmek için kullanilir.
+void adxl345_SetImportantInterruptMapping(SPI_HandleTypeDef *spi, uint8_t single_tap, uint8_t double_tap, uint8_t free_fall, uint8_t activity, uint8_t inactivity);
 
 #endif
