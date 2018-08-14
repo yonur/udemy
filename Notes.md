@@ -9,4 +9,5 @@ pinler.
 ADXL345: Faydalı Linkler:
 http://www.analog.com/en/analog-dialogue/articles/detecting-falls-3-axis-digital-accelerometer.html
 https://github.com/arduino/Arduino/releases/tag/1.8.5
+https://learn.sparkfun.com/tutorials/adxl345-hookup-guide?_ga=2.85584985.1167364778.1534249884-451285960.1522738016
 
