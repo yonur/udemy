@@ -1,3 +1,6 @@
+#ifndef __ADXL345_H
+#define __ADXL345_H
+
 #define DEVID          0x00  //R   11100101  Device ID 
 #define THRESH_TAP     0x1D  //R/W 00000000  Tap threshold 
 #define OFSX           0x1E  //R/W 00000000  X-axis offset 
@@ -29,19 +32,30 @@
 #define FIFO_CTL       0x38  //R/W 00000000  FIFO control 
 #define FIFO_STATUS    0x39  //R   00000000  FIFO status 
 
+//Action bits
+#define LOW_POWER      0x10
+
+#include "stm32f4xx_hal.h"
+#include <stdint.h> 
+
 //Set the LOW_POWER bit in the BW_RATE register
-void adxl345_LowPowerMode(void) {
-  
-}
+void adxl345_LowPowerMode(SPI_HandleTypeDef spi);
 
 //Clear the Measure bit in the POWER_CTL register
-void adxl345_StandbyMode(void) {
-
-}
+void adxl345_StandbyMode(SPI_HandleTypeDef spi);
 
 //If clear SPI bit in the DATA_FORMAT register -> 4-wire mode
 //If set SPI bit in the DATA_FORMAT register -> 3-wire mode
-void adxl345_SetSpi_Mode(void) {
+void adxl345_SetSpi_Mode(void);
+
+//To get device id
+void adxl345_devID(SPI_HandleTypeDef spi);
+
+	
+void adxl345_Write(SPI_HandleTypeDef spi, uint8_t reg, uint8_t *value, uint8_t data_len);
 
 
-}
+void adxl345_Read(SPI_HandleTypeDef spi, uint8_t reg, uint8_t *data_buf, uint8_t data_len);
+
+
+#endif
