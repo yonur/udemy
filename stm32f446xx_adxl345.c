@@ -1,73 +1,66 @@
-#include "asdxl345_stm32f446xx.h"
+#include "adxl345.h"
 
-void adxl345Write_SPI(SPI_HandleTypeDef *spi, uint8_t reg, uint8_t *data_buf, uint8_t data_length ) {
+void adxl345_Read(SPI_HandleTypeDef spi, uint8_t reg, uint8_t *data_buf, uint8_t data_len) {
+	
+	//This read command
+	reg |= (1 << 7);
+	
+	if(data_len > 1) 
+		reg |= (1 << 6);
 
-	uint8_t* packet;
+	data_buf[0] = reg;
 	
-	packet[0] &= ~(1 << 7);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 	
-	if(data_length > 1) {
+	HAL_SPI_Transmit(&spi, data_buf, data_len + 1, 100);
 	
-		packet[0] |= (1 << 6);
-		
-		packet[0] |= reg;
-		
-		packet++; 
-		
-		for(uint8_t i = 0; i < data_length; i++) {
-		
-				*packet = data_buf[i];
-				
-				 packet++;
-			
-		}
-		
-	} else {
+	HAL_SPI_Receive(&spi, data_buf, data_len + 1, 100);
 	
-		packet[0] &= ~(1 << 6);
-		
-		packet[0] |= reg;
-		
-		packet++;
-		
-		*packet = *data_buf;
-		
-	}
-	  
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, 0);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 	
-	HAL_SPI_Transmit(spi, packet, 2, HAL_MAX_DELAY);
 
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, 1);
+	HAL_Delay(1);
 	
 }
 
-void adxl345Read_SPI(SPI_HandleTypeDef *spi, uint8_t *reg, uint8_t *tx_data_buf, uint8_t *rx_data_buf, uint8_t data_length) {
+void adxl345_Write(SPI_HandleTypeDef spi,  uint8_t reg, uint8_t *value, uint8_t data_len) {
 
-	uint8_t* packet;
-	uint8_t spiData;
+	uint8_t *data_buf;
 	
-	*reg |= (1 << 7);
+	reg &= ~(1 << 7);
 	
-	if(data_length > 1)
-	 *reg |= (1 << 6);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, 0);
+	if(data_len > 1)
+		reg |= (1 << 6);
 	
-	HAL_SPI_Transmit(spi, reg, 2, 100);
+	data_buf[0] = reg;
 	
-	while(__HAL_SPI_GET_FLAG(spi, HAL_SPI_STATE_BUSY));
+	for(uint8_t i = 0; i < data_len; i++) {
 	
-	spiData = HAL_SPI_Receive(spi, rx_data_buf, 2, 100);
+		data_buf[i + 1] = value[i];
+		
+	}
 	
-	while(__HAL_SPI_GET_FLAG(spi, HAL_SPI_STATE_BUSY));
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 	
-	spiData = HAL_SPI_Transmit(spi, 0x00, 1, 100);
+	HAL_SPI_Transmit(&spi, data_buf, (data_len + 1), 100);
 	
-	while(__HAL_SPI_GET_FLAG(spi, HAL_SPI_STATE_BUSY));
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 	
-	spiData = HAL_SPI_Receive(spi, rx_data_buf, 2, 100);
+	HAL_Delay(1);
+	
+}
 
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, 1);
+void adxl345_LowPowerMode(SPI_HandleTypeDef spi) {
 	
-	HAL_SPI_TransmitReceive(spi,reg,rx_data_buf,2,100);
+  adxl345_Write(spi, POWER_CTL,(uint8_t *) LOW_POWER, 1);
+	
+}
+
+void adxl345_StandbyMode(SPI_HandleTypeDef spi) {
+		
+}
+
+void adxl345_devID(SPI_HandleTypeDef spi) {
+
+
 }
