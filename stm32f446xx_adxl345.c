@@ -169,6 +169,103 @@ uint8_t adxl345_IsInterruptEnabled(SPI_HandleTypeDef *spi, uint8_t bit_pos) {
 	
 }
 
+void adxl345_GetRangeSettings(SPI_HandleTypeDef *spi, uint8_t *range_settings) {
+	
+	uint8_t buf;
 
+	adxl345_Read(*spi, DATA_FORMAT, &buf, 1);
 
+	*range_settings = (buf & 0x03);
+
+}
 																						
+void adxl345_SetRangeSettings(SPI_HandleTypeDef *spi, uint8_t val) {
+
+	uint8_t read_buf;
+	
+	uint8_t rangeSetted = 0x00;
+	
+	adxl345_Read(*spi, ADXL345_DATA_FORMAT, &rangeSetted, 1);
+	
+	MODIFY_REG(rangeSetted, 0x03, val);
+
+	adxl345_Write(*spi, ADXL345_DATA_FORMAT, &rangeSetted, 1);
+	
+}
+
+uint8_t adxl345_GetSelfTestBit(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_SELF_TEST_BIT);
+
+}
+
+void adxl345_SetSelfTestBit(SPI_HandleTypeDef *spi, uint8_t self_testbit_control) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_SELF_TEST_BIT, self_testbit_control);
+
+}
+
+uint8_t adxl345_GetSPI_State(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_SPI_BIT);
+	
+}
+
+void adxl345_SetSPIState(SPI_HandleTypeDef *spi, uint8_t spi_state_control) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_SPI_BIT, spi_state_control);
+
+}
+
+uint8_t adxl345_GetIntInvertState(SPI_HandleTypeDef *spi) {
+	
+	return adxl345_GetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_INT_INVERT_BIT);
+
+}
+
+void adxl345_SetIntInvertState(SPI_HandleTypeDef *spi, uint8_t int_invert_control) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_INT_INVERT_BIT, int_invert_control);
+	
+}
+
+uint8_t adxl345_GetFullResBitState(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_FULL_RES_BIT);
+
+}
+
+void adxl345_SetFullResBitState(SPI_HandleTypeDef *spi, uint8_t full_res_bit_control) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_FULL_RES_BIT, full_res_bit_control);
+}
+
+uint8_t adxl345_GetJustifyBitState(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_JUSTIFY_BIT);
+
+}
+
+void adxl345_SetJustifyBitState(SPI_HandleTypeDef *spi, uint8_t justify_bit_control) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_JUSTIFY_BIT, justify_bit_control);
+
+}
+
+void adxl345_SetTapThreshold(SPI_HandleTypeDef *spi, uint8_t tap_threshold) {
+
+	tap_threshold = CONSTRAIN(tap_threshold, 0 , 255);
+	
+	adxl345_Write(*spi, ADXL345_THRESH_TAP, &tap_threshold, 1);
+
+}
+
+uint8_t adxl345_GetTapThreshold(SPI_HandleTypeDef *spi) {
+
+	uint8_t tap_threshold_val;
+	
+	adxl345_Read(*spi, ADXL345_THRESH_TAP, &tap_threshold_val, 1);
+	
+	return tap_threshold_val;
+	
+}
