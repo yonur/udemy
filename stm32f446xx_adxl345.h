@@ -85,6 +85,27 @@
 #define ADXL345_BW_0_10			0x1			// 0001		IDD = 23uA
 #define ADXL345_BW_0_05			0x0			// 0000		IDD = 23uA
 
+#define ADXL345_RANGE_2G		0x00
+#define ADXL345_RANGE_4G		0x01
+#define ADXL345_RANGE_8G		0x02
+#define ADXL345_RANGE_16G		0x03
+
+#define ADXL345_DATA_FORMAT_SELF_TEST_BIT  0x80
+#define ADXL345_DATA_FORMAT_SPI_BIT				 0x40
+#define ADXL345_DATA_FORMAT_INT_INVERT_BIT 0x20
+#define ADXL345_DATA_FORMAT_FULL_RES_BIT	 0x08
+#define ADXL345_DATA_FORMAT_JUSTIFY_BIT		 0x04
+
+#define ADXL345_DATA_FORMAT_ENABLE_SELF_TEST_FORCE  0x01
+#define ADXL345_DATA_FORMAT_DISABLE_SELF_TEST_FORCE 0x00
+#define ADXL345_DATA_FORMAT_SPI_3_WIRE							0x01
+#define ADXL345_DATA_FORMAT_SPI_4_WIRE							0x00
+#define ADXL345_DATA_FORMAT_INT_INVERT_ACTIVE_LOW   0x01
+#define ADXL345_DATA_FORMAT_INT_INVERT_ACTIVE_HIGH  0x00
+#define ADXL345_DATA_FORMAT_FULL_RES								0x01
+#define ADXL345_DATA_FORMAT_10_BIT_MODE							0x00
+#define ADXL345_DATA_FORMAT_JUSTIFY_MSB							0x01
+#define ADXL345_DATA_FORMAT_JUSTIFY_LSB							0x00
 
  /************************** INTERRUPT PINS **************************/
 #define ADXL345_INT1_PIN		0x00		//INT1: 0
@@ -120,6 +141,8 @@
 
 //Action bits
 #define LOW_POWER      0x10
+
+#define CONSTRAIN(VAL, LOW, HIGH) ( ( VAL < LOW ) ? LOW : ( ( VAL > HIGH ) ? HIGH : VAL ) )
 
 uint8_t rec_buf[6];
 
@@ -161,5 +184,50 @@ void adxl345_SetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit, 
 
 //Interrupt mapping'teki interruptlari tek tek pin 1 yada pin 2'ye seçmek için kullanilir.
 void adxl345_SetImportantInterruptMapping(SPI_HandleTypeDef *spi, uint8_t single_tap, uint8_t double_tap, uint8_t free_fall, uint8_t activity, uint8_t inactivity);
+
+//To get the g range
+void adxl345_GetRangeSettings(SPI_HandleTypeDef *spi, uint8_t *range_settings);
+
+//To set the g range
+void adxl345_SetRangeSettings(SPI_HandleTypeDef *spi, uint8_t val);
+
+//To get the self test bit in the DATA_FORMAT register
+uint8_t adxl345_GetSelfTestBit(SPI_HandleTypeDef *spi);
+
+//To control self test
+void adxl345_SetSelfTestBit(SPI_HandleTypeDef *spi, uint8_t self_testbit_control);
+
+//To get SPI state (3-Wire or 4-Wire)
+uint8_t adxl345_GetSPI_State(SPI_HandleTypeDef *spi);
+
+//To set SPI state (3-Wire or 4-Wire)
+void adxl345_SetSPIState(SPI_HandleTypeDef *spi, uint8_t spi_state_control);
+
+//To get the INT_INVERT state
+uint8_t adxl345_GetIntInvertState(SPI_HandleTypeDef *spi);
+
+//To set the INT_INVERT state
+void adxl345_SetIntInvertState(SPI_HandleTypeDef *spi, uint8_t int_invert_control);
+
+//To get the full resolution bit state
+uint8_t adxl345_GetFullResBitState(SPI_HandleTypeDef *spi);
+
+//To set the full resolution bit state
+void adxl345_SetFullResBitState(SPI_HandleTypeDef *spi, uint8_t full_res_bit_control);
+
+//To get the justify bit state
+uint8_t adxl345_GetJustifyBitState(SPI_HandleTypeDef *spi);
+
+//To set the justify bit state
+void adxl345_SetJustifyBitState(SPI_HandleTypeDef *spi, uint8_t justify_bit_control);
+
+// Should Set Between 0 and 255
+// Scale Factor is 62.5 mg/LSB
+// A Value of 0 May Result in Undesirable Behavior
+void adxl345_SetTapThreshold(SPI_HandleTypeDef *spi, uint8_t tap_threshold);
+
+// Return Value Between 0 and 255
+// Scale Factor is 62.5 mg/LSB
+uint8_t adxl345_GetTapThreshold(SPI_HandleTypeDef *spi);
 
 #endif
