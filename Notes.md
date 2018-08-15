@@ -11,3 +11,9 @@ http://www.analog.com/en/analog-dialogue/articles/detecting-falls-3-axis-digital
 https://github.com/arduino/Arduino/releases/tag/1.8.5
 https://learn.sparkfun.com/tutorials/adxl345-hookup-guide?_ga=2.85584985.1167364778.1534249884-451285960.1522738016
 
+Double Tap'ın geçersi olduğu durumlar vardır bunlar:
+- İlk tap(single tap)'ın latency time'ı dolmadan treshold'u geçen bir spike olursa bu doube tap olarak değerlendirlmez
+- Eğer ikinci second tap için olan time window'un başlangıcında thresholdu aşan spike saptanırsa bu double tap olarakdeğerlendirilmez
+- Eğer ikinci spike DUR ile belirtilen time limiti aşarsa double tap olarak değerlendirilmez
+
+
