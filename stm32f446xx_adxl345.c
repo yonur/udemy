@@ -1,4 +1,4 @@
-#include "asdxl345_stm32f446xx.h"
+#include "adxl345_stm32f446xx.h"
 
 void adxl345_Read(SPI_HandleTypeDef spi, uint8_t reg, uint8_t *data_buf, uint8_t data_len) {
 	
@@ -50,12 +50,6 @@ void adxl345_Write(SPI_HandleTypeDef spi,  uint8_t reg, uint8_t *value, uint8_t 
 	
 }
 
-void adxl345_LowPowerMode(SPI_HandleTypeDef spi) {
-	
-  adxl345_Write(spi, POWER_CTL,(uint8_t *) LOW_POWER, 1);
-	
-}
-
 void adxl345_StandbyMode(SPI_HandleTypeDef spi) {
 		
 }
@@ -70,9 +64,9 @@ void adxl345_PowerOn(SPI_HandleTypeDef spi) {
 	
 	adxl345_Write(spi, POWER_CTL, 0, 1);  //Wakeup
 	
-	adxl345_Write(spi, POWER_CTL, 16, 1); //Auto sleep
+	adxl345_Write(spi, POWER_CTL, (uint8_t *)16, 1); //Auto sleep
 	
-	adxl345_Write(spi, POWER_CTL, 8, 1);  //Measure
+	adxl345_Write(spi, POWER_CTL, (uint8_t *)8, 1);  //Measure
 
 }
 
@@ -130,7 +124,7 @@ void adxl345_SetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit, 
 
 uint8_t adxl345_GetInterruptSource(SPI_HandleTypeDef *spi, uint8_t interruptBitPos) {
 
-	adxl345_GetRegisterBit(spi, ADXL345_INT_SOURCE, interruptBitPos);
+	return adxl345_GetRegisterBit(spi, ADXL345_INT_SOURCE, interruptBitPos);
 
 }
 
@@ -180,8 +174,6 @@ void adxl345_GetRangeSettings(SPI_HandleTypeDef *spi, uint8_t *range_settings) {
 }
 																						
 void adxl345_SetRangeSettings(SPI_HandleTypeDef *spi, uint8_t val) {
-
-	uint8_t read_buf;
 	
 	uint8_t rangeSetted = 0x00;
 	
@@ -253,8 +245,6 @@ void adxl345_SetJustifyBitState(SPI_HandleTypeDef *spi, uint8_t justify_bit_cont
 }
 
 void adxl345_SetTapThreshold(SPI_HandleTypeDef *spi, uint8_t tap_threshold) {
-
-	tap_threshold = CONSTRAIN(tap_threshold, 0 , 255);
 	
 	adxl345_Write(*spi, ADXL345_THRESH_TAP, &tap_threshold, 1);
 
@@ -268,4 +258,441 @@ uint8_t adxl345_GetTapThreshold(SPI_HandleTypeDef *spi) {
 	
 	return tap_threshold_val;
 	
+}
+
+void adxl345_SetAxisGains(double *_gains) {
+
+	for(uint8_t i = 0; i < 3; i++) {
+	
+		gains[i] = _gains[i];
+	
+	}
+	
+}
+
+void adxl345_GetAxisGains(double *_gains) {
+
+	for(uint8_t i = 0; i < 3; i++) {
+	
+		_gains[i] = gains[i];	
+		
+	}
+
+}
+
+void adxl345_GetAxisOffset(SPI_HandleTypeDef *spi, uint8_t *x, uint8_t *y, uint8_t *z) {
+
+	adxl345_Read(*spi, ADXL345_OFSX, x, 1);
+	
+	adxl345_Read(*spi, ADXL345_OFSY, y, 1);
+	
+	adxl345_Read(*spi, ADXL345_OFSZ, z, 1);
+
+}
+
+void adxl345_SetAxisOffset(SPI_HandleTypeDef *spi, uint8_t x, uint8_t y, uint8_t z) {
+
+	adxl345_Write(*spi, ADXL345_OFSX, &x, 1);
+	
+	adxl345_Write(*spi, ADXL345_OFSY, &y , 1);
+	
+	adxl345_Write(*spi, ADXL345_OFSZ, &z, 1);
+
+}
+
+void adxl345_SetTapDuration(SPI_HandleTypeDef *spi, uint8_t tap_duration) {
+	
+	adxl345_Write(*spi, ADXL345_DUR, &tap_duration, 1);
+	
+}
+
+uint8_t adxl345_GetTapDuration(SPI_HandleTypeDef *spi) {
+
+	uint8_t tap_dur_val;
+	
+	adxl345_Read(*spi, ADXL345_DUR, &tap_dur_val, 1);
+	
+	return tap_dur_val;
+	
+}
+
+void adxl345_SetDoubleTapLatency(SPI_HandleTypeDef *spi, uint8_t double_tap_latency) {
+
+	adxl345_Write(*spi, ADXL345_LATENT, &double_tap_latency, 1);
+
+}
+
+uint8_t adxl345_GetDoubleTapLatency(SPI_HandleTypeDef *spi) {
+
+	uint8_t double_tap_latency;
+	
+	adxl345_Read(*spi, ADXL345_LATENT, &double_tap_latency, 1);
+	
+	return double_tap_latency;
+
+}
+
+void adxl345_SetDoubleTapWindow(SPI_HandleTypeDef *spi, uint8_t double_tap_window) {
+
+	adxl345_Write(*spi, ADXL345_WINDOW, &double_tap_window, 1);
+
+}
+
+uint8_t adxl34_GetDoubleTapWindow(SPI_HandleTypeDef *spi) {
+
+	uint8_t double_tap_window_val;
+	
+	adxl345_Read(*spi, ADXL345_WINDOW, &double_tap_window_val, 1);
+	
+	return double_tap_window_val;
+
+}
+
+void adxl345_SetActivityThreshold(SPI_HandleTypeDef *spi, uint8_t activity_threshold) {
+	
+	adxl345_Write(*spi, ADXL345_THRESH_ACT, &activity_threshold, 1);
+
+}
+
+uint8_t adxl345_GetActivityThreshold(SPI_HandleTypeDef *spi) {
+
+	uint8_t activity_threshold_val;
+	
+	adxl345_Read(*spi, ADXL345_THRESH_ACT, &activity_threshold_val, 1);
+	
+	return activity_threshold_val;
+
+}
+
+void adxl345_SetInactivityThreshold(SPI_HandleTypeDef *spi, uint8_t inactivity_threshold) {
+	
+	adxl345_Write(*spi, ADXL345_THRESH_INACT, &inactivity_threshold, 1);
+
+}
+	
+uint8_t adxl345_GetInactivityThreshold(SPI_HandleTypeDef *spi) {
+
+	uint8_t inactivity_threshold_val;
+	
+	adxl345_Read(*spi, ADXL345_THRESH_INACT, &inactivity_threshold_val, 1);
+	
+	return inactivity_threshold_val;
+
+}
+
+void adxl345_SetTimeInactivity(SPI_HandleTypeDef *spi, uint8_t inactivity_time) {
+	
+	adxl345_Write(*spi, ADXL345_TIME_INACT, &inactivity_time, 1);
+
+}
+
+uint8_t adxl345_GetTimeInactivity(SPI_HandleTypeDef *spi) {
+
+	uint8_t inactivity_time_val;
+	
+	adxl345_Read(*spi, ADXL345_TIME_INACT, &inactivity_time_val, 1);
+	
+	return inactivity_time_val;
+
+}
+
+void adxl345_SetFreeFallThreshold(SPI_HandleTypeDef *spi, uint8_t free_fall_threshold) {
+
+	adxl345_Write(*spi, ADXL345_THRESH_FF, &free_fall_threshold, 1);
+
+}
+
+uint8_t adxl345_GetFreeFallThreshold(SPI_HandleTypeDef *spi) {
+
+	uint8_t free_fall_val;
+	
+	adxl345_Read(*spi, ADXL345_THRESH_FF, &free_fall_val, 1);
+	
+	return free_fall_val;
+
+}
+
+void adx345_SetFreeFallDuration(SPI_HandleTypeDef *spi, uint8_t free_fall_time) {
+
+	adxl345_Write(*spi, ADXL345_TIME_FF, &free_fall_time, 1);
+
+}
+
+uint8_t adx345_GetFreeFallDuration(SPI_HandleTypeDef *spi) {
+
+	uint8_t free_fall_duration_val;
+	
+	adxl345_Read(*spi, ADXL345_TIME_FF, &free_fall_duration_val, 1);
+	
+	return free_fall_duration_val;
+
+}
+
+uint8_t adxl345_IsActivityX_Enabled(SPI_HandleTypeDef *spi) {
+	
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_X_EN);
+
+}
+
+uint8_t adxl345_IsActivityY_Enabled(SPI_HandleTypeDef *spi) {
+	
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_Y_EN);
+
+}
+
+uint8_t adxl345_IsActivityZ_Enabled(SPI_HandleTypeDef *spi) {
+	
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_Z_EN);
+
+}
+
+uint8_t adxl345_IsInactivityX_Enabled(SPI_HandleTypeDef *spi) {
+	
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_X_EN);
+
+}
+
+uint8_t adxl345_IsInactivityY_Enabled(SPI_HandleTypeDef *spi) {
+	
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_Y_EN);
+
+}
+
+uint8_t adxl345_IsInactivityZ_Enabled(SPI_HandleTypeDef *spi) {
+	
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_Z_EN);
+
+}
+
+void adxl345_SetActivityX(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_X_EN, state);
+
+}
+
+void adxl345_SetActivityY(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_Y_EN, state);
+
+}
+
+void adxl345_SetActivityZ(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_Z_EN, state);
+
+}
+
+void adxl345_SetInactivityX(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_X_EN, state);
+
+}
+
+void adxl345_SetInactivitytY(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_Y_EN	, state);
+
+}
+
+void adxl345_SetInActivityZ(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_Z_EN, state);
+
+}
+ 
+void adxl345_SetActivityXYZ(SPI_HandleTypeDef *spi, uint8_t stateX, uint8_t stateY, uint8_t stateZ) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_X_EN, stateX);
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_Y_EN, stateY);
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_Z_EN, stateZ);	
+
+}
+
+void adxl345_SetInactivityXYZ(SPI_HandleTypeDef *spi, uint8_t stateX, uint8_t stateY, uint8_t stateZ) {
+	
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_Z_EN, stateX);
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_Z_EN, stateY);
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_Z_EN, stateZ);
+
+}
+
+uint8_t adxl345_IsActivityAc(SPI_HandleTypeDef *spi) {
+	
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_AC_DC);
+
+}
+
+uint8_t adxl345_IsInactivityAc(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_AC_DC);
+
+}
+
+void adxl345_SetActivityAc(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_ACT_AC_DC, state);
+
+}
+
+void adxl345_SetInactivityAc(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_ACT_INACT_CTL, ADXL345_ACT_INACT_CTL_INACT_AC_DC, state);
+
+}
+
+uint8_t adxl345_GetSuppressBit(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_SUPPRESS);
+
+}
+
+void adxl345_SetSuppressBit(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_SUPPRESS, state);
+
+}
+
+/**************************** TAP BITS ******************************/
+/*                                                                  */
+uint8_t adxl345_IsTapdetectionOnX(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_X_EN);
+
+}
+
+uint8_t adxl345_IsTapDetectionOnY(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_Y_EN);
+
+}
+
+uint8_t adxl345_IsTapDetectionOnZ(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_Z_EN);
+
+}
+
+void adxl345_SetTapDetectionOnX(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_X_EN, state);
+
+}
+
+void adxl345_SetTapDetectionOnY(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_Y_EN, state);
+	
+}
+
+void adxl345_SetTapDetectionOnZ(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_Z_EN, state);
+
+}
+
+void adxl345_SetTapDetectionOnXYZ(SPI_HandleTypeDef *spi, uint8_t stateX, uint8_t stateY, uint8_t stateZ) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_X_EN, stateX);
+	
+	adxl345_SetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_Y_EN, stateY);
+	
+	adxl345_SetRegisterBit(spi, ADXL345_TAP_AXES, ADXL345_TAP_AXES_Z_EN, stateZ);
+
+} 
+
+uint8_t adxl345_IsActivitySourceOnX(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_TAP_STATUS, ADXL345_ACT_TAP_ACT_X_SRC);
+
+}
+
+uint8_t adxl345_IsActivitySourceOnY(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_TAP_STATUS, ADXL345_ACT_TAP_ACT_Y_SRC);
+
+}
+
+uint8_t adxl345_IsActivitySourceOnZ(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_TAP_STATUS, ADXL345_ACT_TAP_ACT_Z_SRC);
+
+}
+
+uint8_t adxl345_IsTapSourceOnX(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_TAP_STATUS, ADXL345_ACT_TAP_TAP_X_SRC);
+	
+}
+
+uint8_t adxl345_IsTapSourceOnY(SPI_HandleTypeDef *spi) {
+
+
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_TAP_STATUS, ADXL345_ACT_TAP_TAP_Y_SRC);
+	
+}
+
+uint8_t adxl345_IsTapSourceOnZ(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_TAP_STATUS, ADXL345_ACT_TAP_TAP_Z_SRC);
+
+}
+
+uint8_t adxl345_IsAsleep(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_ACT_TAP_STATUS, ADXL345_ACT_TAP_ASLEEP);
+
+}
+
+uint8_t adxl345_GetLowPowerMode(SPI_HandleTypeDef *spi) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_BW_RATE, ADXL345_BW_RATE_LOW_POWER);
+
+}
+
+void adxl345_SetLowPowerMode(SPI_HandleTypeDef *spi, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_BW_RATE, ADXL345_BW_RATE_LOW_POWER, state);
+
+}
+
+uint8_t adxl345_GetBwRate(SPI_HandleTypeDef *spi) {
+
+	uint8_t 	bw_val;
+	
+	adxl345_Read( *spi, ADXL345_BW_RATE, &bw_val, 1 );
+	
+	bw_val = READ_BIT( bw_val, ADXL345_BW_RATE_MSK );
+	
+	return ( pow( 2, ( bw_val - 6 ) ) * 6.25 );
+
+}
+
+void adxl345_SetBwRate(SPI_HandleTypeDef *spi, double bw_rate) {
+
+	uint8_t int_rate = bw_rate / 6.25;
+	
+	uint8_t bw_rate_count = 0;
+	
+	uint8_t bw_bit_val;
+	
+	while(int_rate >>= 1) {
+	
+		bw_rate_count++;
+	
+	}
+	
+	if(bw_rate_count >= 9) {
+	
+		adxl345_Read(*spi, ADXL345_BW_RATE, &bw_bit_val, 1);
+		
+		MODIFY_REG(bw_bit_val, ADXL345_BW_RATE_MSK, bw_rate_count);
+		
+		adxl345_Write(*spi, ADXL345_BW_RATE, &bw_bit_val, 1);
+		
+	}
+
 }
