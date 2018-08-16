@@ -1,9 +1,14 @@
-#ifndef ASDXL345_STM32F446XX_H
-#define ASDXL345_STM32F446XX_H
+#ifndef __ADXL345_STM32F446XX_H
+#define __ADXL345_STM32F446XX_H
 
 #include "stm32f4xx_hal.h"
 #include <stdint.h> 
+#include <math.h>
 
+/**********************************Macro Functions***********************************************/
+#define CONSTRAIN(VAL, LOW, HIGH) ( ( VAL < LOW ) ? LOW : ( ( VAL > HIGH ) ? HIGH : VAL ) )
+
+/***************************************Registers************************************************/
 #define DEVID          0x00  //R   11100101  Device ID 
 #define THRESH_TAP     0x1D  //R/W 00000000  Tap threshold 
 #define OFSX           0x1E  //R/W 00000000  X-axis offset 
@@ -85,16 +90,17 @@
 #define ADXL345_BW_0_10			0x1			// 0001		IDD = 23uA
 #define ADXL345_BW_0_05			0x0			// 0000		IDD = 23uA
 
+/*************************Register Areas and Checks******************************/
 #define ADXL345_RANGE_2G		0x00
 #define ADXL345_RANGE_4G		0x01
 #define ADXL345_RANGE_8G		0x02
 #define ADXL345_RANGE_16G		0x03
 
-#define ADXL345_DATA_FORMAT_SELF_TEST_BIT  0x80
-#define ADXL345_DATA_FORMAT_SPI_BIT				 0x40
-#define ADXL345_DATA_FORMAT_INT_INVERT_BIT 0x20
-#define ADXL345_DATA_FORMAT_FULL_RES_BIT	 0x08
-#define ADXL345_DATA_FORMAT_JUSTIFY_BIT		 0x04
+#define ADXL345_DATA_FORMAT_SELF_TEST_BIT  0x07
+#define ADXL345_DATA_FORMAT_SPI_BIT				 0x06
+#define ADXL345_DATA_FORMAT_INT_INVERT_BIT 0x05
+#define ADXL345_DATA_FORMAT_FULL_RES_BIT	 0x03
+#define ADXL345_DATA_FORMAT_JUSTIFY_BIT		 0x02
 
 #define ADXL345_DATA_FORMAT_ENABLE_SELF_TEST_FORCE  0x01
 #define ADXL345_DATA_FORMAT_DISABLE_SELF_TEST_FORCE 0x00
@@ -107,7 +113,36 @@
 #define ADXL345_DATA_FORMAT_JUSTIFY_MSB							0x01
 #define ADXL345_DATA_FORMAT_JUSTIFY_LSB							0x00
 
- /************************** INTERRUPT PINS **************************/
+/********* ACTIVATION INACTIVATION CONTROL BIT POSITIONS **************/
+#define ADXL345_ACT_INACT_CTL_ACT_AC_DC 								0x07
+#define ADXL345_ACT_INACT_CTL_INACT_AC_DC 							0x03
+#define ADXL345_ACT_INACT_CTL_ACT_X_EN									0x06
+#define ADXL345_ACT_INACT_CTL_ACT_Y_EN									0x05
+#define ADXL345_ACT_INACT_CTL_ACT_Z_EN									0x04
+#define ADXL345_ACT_INACT_CTL_INACT_X_EN								0x02
+#define ADXL345_ACT_INACT_CTL_INACT_Y_EN								0x01
+#define ADXL345_ACT_INACT_CTL_INACT_Z_EN								0x00
+
+/******************** TAP_AXES BIT POSITIONS *************************/
+#define ADXL345_TAP_AXES_SUPPRESS												0x03
+#define ADXL345_TAP_AXES_X_EN														0x02
+#define ADXL345_TAP_AXES_Y_EN														0x01
+#define ADXL345_TAP_AXES_Z_EN														0x00
+
+/******************* ACT_TAP_STATUS BIT POSITIONS *******************/
+#define ADXL345_ACT_TAP_ACT_X_SRC												0x06
+#define ADXL345_ACT_TAP_ACT_Y_SRC												0x05
+#define ADXL345_ACT_TAP_ACT_Z_SRC												0x04
+#define ADXL345_ACT_TAP_ASLEEP													0x03
+#define ADXL345_ACT_TAP_TAP_X_SRC												0x02
+#define ADXL345_ACT_TAP_TAP_Y_SRC												0x01
+#define ADXL345_ACT_TAP_TAP_Z_SRC												0x00
+
+/******************** BW_RATE BIT POSITIONS *************************/
+#define ADXL345_BW_RATE_LOW_POWER												0x04
+#define ADXL345_BW_RATE_MSK												0x0F
+
+/************************** INTERRUPT PINS **************************/
 #define ADXL345_INT1_PIN		0x00		//INT1: 0
 #define ADXL345_INT2_PIN		0x01		//INT2: 1
 
@@ -131,7 +166,7 @@
 #define ADXL345_OVERRUNY				0x00
 
 
- /****************************** ERRORS ******************************/
+/******************************* ERRORS ******************************/
 #define ADXL345_OK			1		// No Error
 #define ADXL345_ERROR		0		// Error Exists
 
@@ -142,12 +177,11 @@
 //Action bits
 #define LOW_POWER      0x10
 
-#define CONSTRAIN(VAL, LOW, HIGH) ( ( VAL < LOW ) ? LOW : ( ( VAL > HIGH ) ? HIGH : VAL ) )
-
+/****************************Variables**********************************************************/
 uint8_t rec_buf[6];
+double gains[3] = {0.00376390, 0.00376009, 0.00349265};
 
-//Set the LOW_POWER bit in the BW_RATE register
-void adxl345_LowPowerMode(SPI_HandleTypeDef spi);
+/***************************Functions***********************************************************/
 
 //Clear the Measure bit in the POWER_CTL register
 void adxl345_StandbyMode(SPI_HandleTypeDef spi);
@@ -215,12 +249,16 @@ uint8_t adxl345_GetFullResBitState(SPI_HandleTypeDef *spi);
 //To set the full resolution bit state
 void adxl345_SetFullResBitState(SPI_HandleTypeDef *spi, uint8_t full_res_bit_control);
 
+/*************************** JUSTIFY BIT STATE **************************/
+/*                           ~ GET & SET                            */
 //To get the justify bit state
 uint8_t adxl345_GetJustifyBitState(SPI_HandleTypeDef *spi);
 
 //To set the justify bit state
 void adxl345_SetJustifyBitState(SPI_HandleTypeDef *spi, uint8_t justify_bit_control);
 
+/*********************** THRESH_TAP BYTE VALUE **********************/
+/*                          ~ SET & GET                             */
 // Should Set Between 0 and 255
 // Scale Factor is 62.5 mg/LSB
 // A Value of 0 May Result in Undesirable Behavior
@@ -229,5 +267,202 @@ void adxl345_SetTapThreshold(SPI_HandleTypeDef *spi, uint8_t tap_threshold);
 // Return Value Between 0 and 255
 // Scale Factor is 62.5 mg/LSB
 uint8_t adxl345_GetTapThreshold(SPI_HandleTypeDef *spi);
+
+/****************** GAIN FOR EACH AXIS IN Gs / COUNT *****************/
+/*                           ~ SET & GET                            */
+
+//To set axis gain
+void adxl345_SetAxisGains(double *_gains);
+
+//to get axis gain
+void adxl345_GetAxisGains(double *_gains);
+
+/********************* OFSX, OFSY and OFSZ BYTES ********************/
+/*                           ~ SET & GET                            */
+// OFSX, OFSY and OFSZ: User Offset Adjustments in Twos Complement Format
+// Scale Factor of 15.6mg/LSB
+void adxl345_GetAxisOffset(SPI_HandleTypeDef *spi, uint8_t *x, uint8_t *y, uint8_t *z);
+
+void adxl345_SetAxisOffset(SPI_HandleTypeDef *spi, uint8_t x, uint8_t y, uint8_t z);
+
+/****************************** DUR BYTE ****************************/
+/*                           ~ SET & GET                            */
+// DUR Byte: Contains an Unsigned Time Value Representing the Max Time 
+//  that an Event must be Above the THRESH_TAP Threshold to qualify 
+//  as a Tap Event
+// The scale factor is 625µs/LSB
+// Value of 0 Disables the Tap/Double Tap Funcitons. Max value is 255.
+void adxl345_SetTapDuration(SPI_HandleTypeDef *spi, uint8_t tap_duration);
+
+uint8_t adxl345_GetTapDuration(SPI_HandleTypeDef *spi);
+
+/************************** LATENT REGISTER *************************/
+/*                           ~ SET & GET                            */
+// Contains Unsigned Time Value Representing the Wait Time from the Detection
+//  of a Tap Event to the Start of the Time Window (defined by the Window 
+//  Register) during which a possible Second Tap Even can be Detected.
+// Scale Factor is 1.25ms/LSB. 
+// A Value of 0 Disables the Double Tap Function.
+// It Accepts a Maximum Value of 255.
+void adxl345_SetDoubleTapLatency(SPI_HandleTypeDef *spi, uint8_t double_tap_latency);
+
+uint8_t adxl345_GetDoubleTapLatency(SPI_HandleTypeDef *spi);
+
+/************************** WINDOW REGISTER *************************/
+/*                           ~ SET & GET                            */
+// Contains an Unsigned Time Value Representing the Amount of Time 
+//  After the Expiration of the Latency Time (determined by Latent register)
+//  During which a Second Valid Tape can Begin. 
+// Scale Factor is 1.25ms/LSB. 
+// Value of 0 Disables the Double Tap Function. 
+// It Accepts a Maximum Value of 255.
+void adxl345_SetDoubleTapWindow(SPI_HandleTypeDef *spi, uint8_t double_tap_window);
+
+uint8_t adxl34_GetDoubleTapWindow(SPI_HandleTypeDef *spi);
+
+/*********************** THRESH_ACT REGISTER ************************/
+/*                          ~ SET & GET                             */
+// Holds the Threshold Value for Detecting Activity.
+// Data Format is Unsigned, so the Magnitude of the Activity Event is Compared 
+//  with the Value is Compared with the Value in the THRESH_ACT Register. 
+// The Scale Factor is 62.5mg/LSB. 
+// Value of 0 may Result in Undesirable Behavior if the Activity Interrupt Enabled. 
+// It Accepts a Maximum Value of 255.
+void adxl345_SetActivityThreshold(SPI_HandleTypeDef *spi, uint8_t activity_threshold);
+
+uint8_t adxl345_GetActivityThreshold(SPI_HandleTypeDef *spi);
+
+/********************** THRESH_INACT REGISTER ***********************/
+/*                          ~ SET & GET                             */
+// Holds the Threshold Value for Detecting Inactivity.
+// The Data Format is Unsigned, so the Magnitude of the INactivity Event is 
+//  Compared with the value in the THRESH_INACT Register. 
+// Scale Factor is 62.5mg/LSB. 
+// Value of 0 May Result in Undesirable Behavior if the Inactivity Interrupt Enabled. 
+// It Accepts a Maximum Value of 255.
+void adxl345_SetInactivityThreshold(SPI_HandleTypeDef *spi, uint8_t inactivity_threshold);
+
+uint8_t adxl345_GetInactivityThreshold(SPI_HandleTypeDef *spi);
+
+/*********************** TIME_INACT RESIGER *************************/
+/*                          ~ SET & GET                             */
+// Contains an Unsigned Time Value Representing the Amount of Time that
+//  Acceleration must be Less Than the Value in the THRESH_INACT Register
+//  for Inactivity to be Declared. 
+// Uses Filtered Output Data* unlike other Interrupt Functions
+// Scale Factor is 1sec/LSB. 
+// Value Must Be Between 0 and 255.
+void adxl345_SetTimeInactivity(SPI_HandleTypeDef *spi, uint8_t inactivity_time);
+
+uint8_t adxl345_GetTimeInactivity(SPI_HandleTypeDef *spi);
+
+/*********************** THRESH_FF Register *************************/
+/*                          ~ SET & GET                             */
+// Holds the Threshold Value, in Unsigned Format, for Free-Fall Detection
+// The Acceleration on all Axes is Compared with the Value in THRES_FF to
+//  Determine if a Free-Fall Event Occurred. 
+// Scale Factor is 62.5mg/LSB. 
+// Value of 0 May Result in Undesirable Behavior if the Free-Fall interrupt Enabled.
+// Accepts a Maximum Value of 255.
+void adxl345_SetFreeFallThreshold(SPI_HandleTypeDef *spi, uint8_t free_fall_threshold);
+
+uint8_t adxl345_GetFreeFallThreshold(SPI_HandleTypeDef *spi);
+
+/************************ TIME_FF Register **************************/
+/*                          ~ SET & GET                             */
+// Stores an Unsigned Time Value Representing the Minimum Time that the Value 
+//  of all Axes must be Less Than THRES_FF to Generate a Free-Fall Interrupt.
+// Scale Factor is 5ms/LSB. 
+// Value of 0 May Result in Undesirable Behavior if the Free-Fall Interrupt Enabled.
+// Accepts a Maximum Value of 255.
+void adx345_SetFreeFallDuration(SPI_HandleTypeDef *spi, uint8_t free_fall_time);
+
+uint8_t adx345_GetFreeFallDuration(SPI_HandleTypeDef *spi);
+
+/************************** ACTIVITY BITS ***************************/
+/*                                                                  */
+uint8_t adxl345_IsActivityX_Enabled(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsActivityY_Enabled(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsActivityZ_Enabled(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsInactivityX_Enabled(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsInactivityY_Enabled(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsInactivityZ_Enabled(SPI_HandleTypeDef *spi);
+
+void adxl345_SetActivityX(SPI_HandleTypeDef *spi, uint8_t state);
+
+void adxl345_SetActivityY(SPI_HandleTypeDef *spi, uint8_t state); 
+	
+void adxl345_SetActivityZ(SPI_HandleTypeDef *spi, uint8_t state); 
+	
+void adxl345_SetInactivityX(SPI_HandleTypeDef *spi, uint8_t state); 
+	
+void adxl345_SetInactivityY(SPI_HandleTypeDef *spi, uint8_t state);
+	
+void adxl345_SetInactivityZ(SPI_HandleTypeDef *spi, uint8_t state);
+
+void adxl345_SetActivityXYZ(SPI_HandleTypeDef *spi, uint8_t stateX, uint8_t stateY, uint8_t stateZ);
+
+void adxl345_SetInactivityXYZ(SPI_HandleTypeDef *spi, uint8_t stateX, uint8_t stateY, uint8_t stateZ);
+
+uint8_t adxl345_IsActivityAc(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsInactivityAc(SPI_HandleTypeDef *spi);
+
+void adxl345_SetActivityAc(SPI_HandleTypeDef *spi, uint8_t state);
+
+void adxl345_SetInactivityAc(SPI_HandleTypeDef *spi, uint8_t state);
+
+/************************* SUPPRESS BITS ****************************/
+/*                                                                  */
+uint8_t adxl345_GetSuppressBit(SPI_HandleTypeDef *spi);
+
+void adxl345_SetSuppressBit(SPI_HandleTypeDef *spi, uint8_t state);
+
+/**************************** TAP BITS ******************************/
+/*                                                                  */
+uint8_t adxl345_IsTapdetectionOnX(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsTapDetectionOnY(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsTapDetectionOnZ(SPI_HandleTypeDef *spi);
+
+void adxl345_SetTapDetectionOnX(SPI_HandleTypeDef *spi, uint8_t state);
+
+void adxl345_SetTapDetectionOnY(SPI_HandleTypeDef *spi, uint8_t state);
+
+void adxl345_SetTapDetectionOnZ(SPI_HandleTypeDef *spi, uint8_t state);
+
+void adxl345_SetTapDetectionOnXYZ(SPI_HandleTypeDef *spi, uint8_t stateX, uint8_t stateY, uint8_t stateZ);
+
+uint8_t adxl345_IsActivitySourceOnX(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsActivitySourceOnY(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsActivitySourceOnZ(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsTapSourceOnX(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsTapSourceOnY(SPI_HandleTypeDef *spi);
+
+uint8_t adxl345_IsTapSourceOnZ(SPI_HandleTypeDef *spi);
+
+/*************************** ASLEEP BIT *****************************/
+/*                                                                  */
+uint8_t adxl345_IsAsleep(SPI_HandleTypeDef *spi);
+
+/************************** LOW POWER BIT ***************************/
+/*                                                                  */
+uint8_t adxl345_GetLowPowerMode(SPI_HandleTypeDef *spi);
+
+void adxl345_SetLowerPowerMode(SPI_HandleTypeDef *spi, uint8_t state);
+
+/*************************** RATE BITS ******************************/
+/*                                                                  */
+
 
 #endif
