@@ -1,28 +1,38 @@
 #include "adxl345_stm32f446xx.h"
 
-void adxl345_Read(SPI_HandleTypeDef spi, uint8_t reg, uint8_t *data_buf, uint8_t data_len) {
+void adxl345_PowerOn(SPI_HandleTypeDef spi) {
 	
-	//This read command
-	reg |= (1 << 7);
+	adxl345_Write(spi, POWER_CTL, ADXL345_POWER_CTL_WAKEUP_8HZ_VAL, 1);  //Wakeup
 	
-	if(data_len > 1) 
-		reg |= (1 << 6);
+	adxl345_Write(spi, POWER_CTL, (uint8_t *)ADXL345_POWER_CTL_AUTO_SLEEP_VAL, 1); //Auto sleep
+	
+	adxl345_Write(spi, POWER_CTL, (uint8_t *)ADXL345_POWER_CTL_MEASURE_VAL, 1);  //Measure
 
-	data_buf[0] = reg;
-	
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
-	
-	HAL_SPI_Transmit(&spi, data_buf, data_len + 1, 100);
-	
-	HAL_SPI_Receive(&spi, data_buf, data_len + 1, 100);
-	
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
-	
+}
 
-	HAL_Delay(1);
+void adxl345_ReadAcceleration(SPI_HandleTypeDef spi, uint8_t * x, uint8_t *y, uint8_t *z) {
+
+	adxl345_Read(spi, DATAX0, rec_buf, 6); 
+
+	*x = ( rec_buf[1] << 8 ) | rec_buf[0];
+	
+	*y = ( rec_buf[3] << 8 ) | rec_buf[2];
+	
+	*z = ( rec_buf[5] << 8 ) | rec_buf[4];
 	
 }
 
+void adxl345_GetGxyz(SPI_HandleTypeDef *spi, uint8_t *x, uint8_t *y, uint8_t *z) {
+
+	*x = (*x) * gains[0];
+	
+	*y = (*y) * gains[1];
+	
+	*z = (*z) * gains[2];
+
+}
+
+//This function is used to send data to the dedicated register of ADXL345
 void adxl345_Write(SPI_HandleTypeDef spi,  uint8_t reg, uint8_t *value, uint8_t data_len) {
 
 	uint8_t *data_buf;
@@ -50,36 +60,26 @@ void adxl345_Write(SPI_HandleTypeDef spi,  uint8_t reg, uint8_t *value, uint8_t 
 	
 }
 
-void adxl345_StandbyMode(SPI_HandleTypeDef spi) {
-		
-}
-
-void adxl345_devID(SPI_HandleTypeDef spi) {
-
-
-}
-
-//ADXL345 güç ayarlari
-void adxl345_PowerOn(SPI_HandleTypeDef spi) {
+//This function is used to read data from the dedicated register of ADXL345
+void adxl345_Read(SPI_HandleTypeDef spi, uint8_t reg, uint8_t *data_buf, uint8_t data_len) {
 	
-	adxl345_Write(spi, POWER_CTL, 0, 1);  //Wakeup
+	//This read command
+	reg |= (1 << 7);
 	
-	adxl345_Write(spi, POWER_CTL, (uint8_t *)16, 1); //Auto sleep
+	if(data_len > 1) 
+		reg |= (1 << 6);
+
+	data_buf[0] = reg;
 	
-	adxl345_Write(spi, POWER_CTL, (uint8_t *)8, 1);  //Measure
-
-}
-
-//Accelerasyon degerini okumak için
-void adxl345_ReadAcceleration(SPI_HandleTypeDef spi, uint8_t * x, uint8_t *y, uint8_t *z) {
-
-	adxl345_Read(spi, DATAX0, rec_buf, 6); 
-
-	*x = ( rec_buf[1] << 8 ) | rec_buf[0];
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 	
-	*y = ( rec_buf[3] << 8 ) | rec_buf[2];
+	HAL_SPI_Transmit(&spi, data_buf, data_len + 1, 100);
 	
-	*z = ( rec_buf[5] << 8 ) | rec_buf[4];
+	HAL_SPI_Receive(&spi, data_buf, data_len + 1, 100);
+	
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+
+	HAL_Delay(1);
 	
 }
 
@@ -87,9 +87,9 @@ void adxl345_GetRangeSettings(SPI_HandleTypeDef *spi, uint8_t *range_settings) {
 	
 	uint8_t buf;
 
-	adxl345_Read(*spi, DATA_FORMAT, &buf, 1);
+	adxl345_Read(*spi, ADXL345_DATA_FORMAT, &buf, SET);
 
-	*range_settings = (buf & 0x03);
+	*range_settings = (buf & ADXL345_DATA_FORMAT_RANGE_MSK);
 
 }
 																						
@@ -99,7 +99,7 @@ void adxl345_SetRangeSettings(SPI_HandleTypeDef *spi, uint8_t val) {
 	
 	adxl345_Read(*spi, ADXL345_DATA_FORMAT, &rangeSetted, 1);
 	
-	MODIFY_REG(rangeSetted, 0x03, val);
+	MODIFY_REG(rangeSetted, ADXL345_DATA_FORMAT_RANGE_MSK, val);
 
 	adxl345_Write(*spi, ADXL345_DATA_FORMAT, &rangeSetted, 1);
 	
@@ -129,14 +129,14 @@ void adxl345_SetSPIState(SPI_HandleTypeDef *spi, uint8_t spi_state_control) {
 
 }
 
-uint8_t adxl345_GetIntInvertState(SPI_HandleTypeDef *spi) {
-	
+uint8_t adxl345_GetInterruptLevelBit(SPI_HandleTypeDef *spi) {
+
 	return adxl345_GetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_INT_INVERT_BIT);
 
 }
 
-void adxl345_SetIntInvertState(SPI_HandleTypeDef *spi, uint8_t int_invert_control) {
-
+void adxl345_SetInterruptLevelBit(SPI_HandleTypeDef *spi, uint8_t int_invert_control) {
+	
 	adxl345_SetRegisterBit(spi, ADXL345_DATA_FORMAT, ADXL345_DATA_FORMAT_INT_INVERT_BIT, int_invert_control);
 	
 }
@@ -164,12 +164,19 @@ void adxl345_SetJustifyBitState(SPI_HandleTypeDef *spi, uint8_t justify_bit_cont
 
 }
 
+/*********************** THRESH_TAP BYTE VALUE **********************/
+/*                          ~ SET & GET                             */
+//Should Set Between 0 and 255
+//Scale Factor is 62.5 mg/LSB
+//A Value of 0 May Result in Undesirable Behavior
 void adxl345_SetTapThreshold(SPI_HandleTypeDef *spi, uint8_t tap_threshold) {
 	
 	adxl345_Write(*spi, ADXL345_THRESH_TAP, &tap_threshold, 1);
 
 }
 
+// Return Value Between 0 and 255
+// Scale Factor is 62.5 mg/LSB
 uint8_t adxl345_GetTapThreshold(SPI_HandleTypeDef *spi) {
 
 	uint8_t tap_threshold_val;
@@ -210,13 +217,13 @@ void adxl345_GetAxisOffset(SPI_HandleTypeDef *spi, uint8_t *x, uint8_t *y, uint8
 
 }
 
-void adxl345_SetAxisOffset(SPI_HandleTypeDef *spi, uint8_t x, uint8_t y, uint8_t z) {
+void adxl345_SetAxisOffset(SPI_HandleTypeDef *spi, uint8_t *x, uint8_t *y, uint8_t *z) {
 
-	adxl345_Write(*spi, ADXL345_OFSX, &x, 1);
+	adxl345_Write(*spi, ADXL345_OFSX, x, 1);
 	
-	adxl345_Write(*spi, ADXL345_OFSY, &y , 1);
+	adxl345_Write(*spi, ADXL345_OFSY, y , 1);
 	
-	adxl345_Write(*spi, ADXL345_OFSZ, &z, 1);
+	adxl345_Write(*spi, ADXL345_OFSZ, z, 1);
 
 }
 
@@ -260,11 +267,11 @@ void adxl345_SetDoubleTapWindow(SPI_HandleTypeDef *spi, uint8_t double_tap_windo
 
 uint8_t adxl34_GetDoubleTapWindow(SPI_HandleTypeDef *spi) {
 
-	uint8_t double_tap_window_val;
+	uint8_t double_tap_val;
 	
-	adxl345_Read(*spi, ADXL345_WINDOW, &double_tap_window_val, 1);
+	adxl345_Read(*spi, ADXL345_WINDOW, &double_tap_val, 1);
 	
-	return double_tap_window_val;
+	return double_tap_val;
 
 }
 
@@ -617,6 +624,34 @@ void adxl345_SetBwRate(SPI_HandleTypeDef *spi, double bw_rate) {
 
 }
 
+/*************************** BANDWIDTH ******************************/
+/*                          ~ SET & GET                             */
+uint8_t adxl345_SetBw(SPI_HandleTypeDef *spi, uint8_t bw_val) {
+
+	if( ( bw_val < ADXL345_BW_0_05 ) || ( bw_val > ADXL345_BW_1600 ) ) {
+	
+		return HAL_ERROR;
+	
+	} else {
+	
+		adxl345_Write(*spi, ADXL345_BW_RATE, &bw_val, 1);
+	
+		return HAL_OK;
+		
+	}
+
+}
+
+uint8_t adxl345_GetBW(SPI_HandleTypeDef *spi) {
+
+	uint8_t bw_val;
+	
+	adxl345_Read(*spi, ADXL345_BW_RATE, &bw_val, 1);
+	
+	return bw_val;
+
+}
+
 uint8_t adxl345_Triggered(uint8_t interrupts, uint8_t mask) {
 
 	return ( (interrupts >> mask) & 1 );
@@ -654,29 +689,29 @@ void adxl345_SetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit, 
 
 void adxl345_SetImportantInterruptMapping(SPI_HandleTypeDef *spi, uint8_t single_tap, uint8_t double_tap, uint8_t free_fall, uint8_t activity, uint8_t inactivity) {
 		
-		if(single_tap == 1) {
+		if(single_tap == ADXL345_SEL_INT1_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_SINGLE_TAP_BIT,   ADXL345_INT1_PIN );}
-	else if(single_tap == 2) {
+	else if(single_tap == ADXL345_SEL_INT2_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_SINGLE_TAP_BIT,   ADXL345_INT2_PIN );}
 
-	if(double_tap == 1) {
+	if(double_tap == ADXL345_SEL_INT1_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_DOUBLE_TAP_BIT,   ADXL345_INT1_PIN );}
-	else if(double_tap == 2) {
+	else if(double_tap == ADXL345_SEL_INT2_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_DOUBLE_TAP_BIT,   ADXL345_INT2_PIN );}
 
-	if(free_fall == 1) {
+	if(free_fall == ADXL345_SEL_INT1_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_FREE_FALL_BIT,   ADXL345_INT1_PIN );}
-	else if(free_fall == 2) {
+	else if(free_fall == ADXL345_SEL_INT2_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_FREE_FALL_BIT,   ADXL345_INT2_PIN );}
 
-	if(activity == 1) {
+	if(activity == ADXL345_SEL_INT1_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_ACTIVITY_BIT,   ADXL345_INT1_PIN );}
-	else if(activity == 2) {
+	else if(activity == ADXL345_SEL_INT2_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_ACTIVITY_BIT,   ADXL345_INT2_PIN );}
 
-	if(inactivity == 1) {
+	if(inactivity == ADXL345_SEL_INT1_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_INACTIVITY_BIT,   ADXL345_INT1_PIN );}
-	else if(inactivity == 2) {
+	else if(inactivity == ADXL345_SEL_INT2_PIN) {
 		adxl345_SetInterruptMapping(spi, ADXL345_INT_INACTIVITY_BIT,   ADXL345_INT2_PIN );}
 
 }
@@ -747,11 +782,11 @@ void adxl345_SetRegisterBit(SPI_HandleTypeDef *spi,  uint8_t reg, uint8_t bit_po
 	
 	if(state) {
 	
-		*reg_val |= (1 << bit_pos);
+		*reg_val |= (1 << bit_pos); // Forces nth Bit of reg_val to 1. Other Bits Unchanged.
 	
 	} else {
 		
-		*reg_val &= ~(1 << bit_pos);
+		*reg_val &= ~(1 << bit_pos); // Forces nth Bit of reg_val to 1. Other Bits Unchanged.
 	
 	}
 	
