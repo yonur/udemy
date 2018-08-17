@@ -203,22 +203,6 @@ void adxl345_PowerOn(SPI_HandleTypeDef spi);
 //Accelerasyon degerini okumak için
 void adxl345_ReadAcceleration(SPI_HandleTypeDef spi, uint8_t * x, uint8_t *y, uint8_t *z); 
 
-//Istenen registerin istenen bitini birlemek veya sifirlamak için kullanilan method
-void adxl345_SetRegisterBit(SPI_HandleTypeDef *spi, uint8_t reg, uint8_t bit_pos, uint8_t state);
-
-//Istenen registerin istenen bitinin durumunu ögrenmek için kullanilan method
-uint8_t adxl345_GetRegisterBit(SPI_HandleTypeDef *spi,  uint8_t reg, uint8_t bit_pos);
-
-//Interrupt source'u ögrenmek için
-uint8_t adxl345_GetInterruptSource(SPI_HandleTypeDef *spi, uint8_t interruptBitPos);
-
-/**********************INTERRUPT MAPPING************************************/
-//Interrupt mapping'i pin 1 yada pin 2'ye set etmek için kullanilir
-void adxl345_SetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit, uint8_t interrupt_pin);
-
-//Interrupt mapping'teki interruptlari tek tek pin 1 yada pin 2'ye seçmek için kullanilir.
-void adxl345_SetImportantInterruptMapping(SPI_HandleTypeDef *spi, uint8_t single_tap, uint8_t double_tap, uint8_t free_fall, uint8_t activity, uint8_t inactivity);
-
 //To get the g range
 void adxl345_GetRangeSettings(SPI_HandleTypeDef *spi, uint8_t *range_settings);
 
@@ -463,6 +447,30 @@ void adxl345_SetLowerPowerMode(SPI_HandleTypeDef *spi, uint8_t state);
 
 /*************************** RATE BITS ******************************/
 /*                                                                  */
+uint8_t adxl345_GetBwRate(SPI_HandleTypeDef *spi);
 
+void adxl345_SetBwRate(SPI_HandleTypeDef *spi, double bw_rate);
+
+/************************* TRIGGER CHECK  ***************************/
+/*                                                                  */
+// Check if Action was Triggered in Interrupts
+// Example triggered(interrupts, ADXL345_SINGLE_TAP);
+uint8_t adxl345_Triggered(uint8_t interrupts, uint8_t mask);
+
+uint8_t adxl345_GetInterruptSource(SPI_HandleTypeDef *spi, uint8_t interrupt_bit);
+
+uint8_t adxl345_GetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit);
+
+void adxl345_SetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit, uint8_t interrupt_pin);
+
+void adxl345_SetImportantInterruptMapping(SPI_HandleTypeDef *spi, uint8_t single_tap, uint8_t double_tap, uint8_t free_fall, uint8_t activity, uint8_t inactivity);
+
+uint8_t adxl345_IsInterruptEnabled(SPI_HandleTypeDef *spi, uint8_t interrupt_bit);
+
+//Istenen registerin istenen bitini birlemek veya sifirlamak için kullanilan method
+void adxl345_SetRegisterBit(SPI_HandleTypeDef *spi, uint8_t reg, uint8_t bit_pos, uint8_t state);
+
+//Istenen registerin istenen bitinin durumunu ögrenmek için kullanilan method
+uint8_t adxl345_GetRegisterBit(SPI_HandleTypeDef *spi,  uint8_t reg, uint8_t bit_pos);
 
 #endif
