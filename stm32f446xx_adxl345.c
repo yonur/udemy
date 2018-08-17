@@ -83,86 +83,6 @@ void adxl345_ReadAcceleration(SPI_HandleTypeDef spi, uint8_t * x, uint8_t *y, ui
 	
 }
 
-//Istenen registerin istenen bitini birlemek veya sifirlamak için kullanilan method
-void adxl345_SetRegisterBit(SPI_HandleTypeDef *spi,  uint8_t reg, uint8_t bit_pos, uint8_t state) {
-
-	uint8_t *reg_val;
-	
-	adxl345_Read(*spi, reg, reg_val, 1);
-	
-	if(state) {
-	
-		*reg_val |= (1 << bit_pos);
-	
-	} else {
-		
-		*reg_val &= ~(1 << bit_pos);
-	
-	}
-	
-	adxl345_Write(*spi, reg, reg_val, 1);
-
-}
-
-//Istenen registerin istenen bitinin durumunu ögrenmek için kullanilan method
-uint8_t adxl345_GetRegisterBit(SPI_HandleTypeDef *spi,  uint8_t reg, uint8_t bit_pos) {
-
-	uint8_t *reg_val;
-	
-	adxl345_Read(*spi, reg, reg_val, 1);
-	
-	return ((*reg_val >> bit_pos) & 1);
-
-} 
-
-//
-void adxl345_SetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit, uint8_t interrupt_pin) {
-	
-	adxl345_SetRegisterBit(spi, ADXL345_INT_MAP, interrupt_pin, interrupt_bit);
-
-}
-
-uint8_t adxl345_GetInterruptSource(SPI_HandleTypeDef *spi, uint8_t interruptBitPos) {
-
-	return adxl345_GetRegisterBit(spi, ADXL345_INT_SOURCE, interruptBitPos);
-
-}
-
-void adxl345_SetImportantInterruptMapping(SPI_HandleTypeDef *spi, uint8_t single_tap, uint8_t double_tap, uint8_t free_fall, uint8_t activity, uint8_t inactivity) {
-		
-		if(single_tap == 1) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_SINGLE_TAP_BIT,   ADXL345_INT1_PIN );}
-	else if(single_tap == 2) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_SINGLE_TAP_BIT,   ADXL345_INT2_PIN );}
-
-	if(double_tap == 1) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_DOUBLE_TAP_BIT,   ADXL345_INT1_PIN );}
-	else if(double_tap == 2) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_DOUBLE_TAP_BIT,   ADXL345_INT2_PIN );}
-
-	if(free_fall == 1) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_FREE_FALL_BIT,   ADXL345_INT1_PIN );}
-	else if(free_fall == 2) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_FREE_FALL_BIT,   ADXL345_INT2_PIN );}
-
-	if(activity == 1) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_ACTIVITY_BIT,   ADXL345_INT1_PIN );}
-	else if(activity == 2) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_ACTIVITY_BIT,   ADXL345_INT2_PIN );}
-
-	if(inactivity == 1) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_INACTIVITY_BIT,   ADXL345_INT1_PIN );}
-	else if(inactivity == 2) {
-		adxl345_SetInterruptMapping(spi, ADXL345_INT_INACTIVITY_BIT,   ADXL345_INT2_PIN );}
-
-}
-
-uint8_t adxl345_IsInterruptEnabled(SPI_HandleTypeDef *spi, uint8_t bit_pos) {
-
-	return adxl345_GetRegisterBit(spi, ADXL345_INT_ENABLE, bit_pos);
-	
-}
-
 void adxl345_GetRangeSettings(SPI_HandleTypeDef *spi, uint8_t *range_settings) {
 	
 	uint8_t buf;
@@ -696,3 +616,158 @@ void adxl345_SetBwRate(SPI_HandleTypeDef *spi, double bw_rate) {
 	}
 
 }
+
+uint8_t adxl345_Triggered(uint8_t interrupts, uint8_t mask) {
+
+	return ( (interrupts >> mask) & 1 );
+
+}
+
+/*
+ ADXL345_DATA_READY
+ ADXL345_SINGLE_TAP
+ ADXL345_DOUBLE_TAP
+ ADXL345_ACTIVITY
+ ADXL345_INACTIVITY
+ ADXL345_FREE_FALL
+ ADXL345_WATERMARK
+ ADXL345_OVERRUNY
+ */
+
+uint8_t adxl345_GetInterruptSource(SPI_HandleTypeDef *spi, uint8_t interrupt_bit) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_INT_SOURCE, interrupt_bit);
+
+}
+
+uint8_t adxl345_GetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_INT_MAP, interrupt_bit);
+
+}
+
+void adxl345_SetInterruptMapping(SPI_HandleTypeDef *spi, uint8_t interrupt_bit, uint8_t interrupt_pin) {
+	
+	adxl345_SetRegisterBit(spi, ADXL345_INT_MAP, interrupt_bit, interrupt_pin);
+
+}
+
+void adxl345_SetImportantInterruptMapping(SPI_HandleTypeDef *spi, uint8_t single_tap, uint8_t double_tap, uint8_t free_fall, uint8_t activity, uint8_t inactivity) {
+		
+		if(single_tap == 1) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_SINGLE_TAP_BIT,   ADXL345_INT1_PIN );}
+	else if(single_tap == 2) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_SINGLE_TAP_BIT,   ADXL345_INT2_PIN );}
+
+	if(double_tap == 1) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_DOUBLE_TAP_BIT,   ADXL345_INT1_PIN );}
+	else if(double_tap == 2) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_DOUBLE_TAP_BIT,   ADXL345_INT2_PIN );}
+
+	if(free_fall == 1) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_FREE_FALL_BIT,   ADXL345_INT1_PIN );}
+	else if(free_fall == 2) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_FREE_FALL_BIT,   ADXL345_INT2_PIN );}
+
+	if(activity == 1) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_ACTIVITY_BIT,   ADXL345_INT1_PIN );}
+	else if(activity == 2) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_ACTIVITY_BIT,   ADXL345_INT2_PIN );}
+
+	if(inactivity == 1) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_INACTIVITY_BIT,   ADXL345_INT1_PIN );}
+	else if(inactivity == 2) {
+		adxl345_SetInterruptMapping(spi, ADXL345_INT_INACTIVITY_BIT,   ADXL345_INT2_PIN );}
+
+}
+
+uint8_t adxl345_IsInterruptEnabled(SPI_HandleTypeDef *spi, uint8_t interrupt_bit) {
+
+	return adxl345_GetRegisterBit(spi, ADXL345_INT_ENABLE, interrupt_bit);
+	
+}
+
+void adxl345_SetInterrupt(SPI_HandleTypeDef *spi, uint8_t interrupt_bit, uint8_t state) {
+
+	adxl345_SetRegisterBit(spi, ADXL345_INT_ENABLE, interrupt_bit, state);
+
+}
+
+void adxl345_SingleTapINT(SPI_HandleTypeDef *spi, uint8_t status) {
+
+	if(status)
+		adxl345_SetInterrupt(spi, ADXL345_INT_SINGLE_TAP_BIT, SET);
+	else
+		adxl345_SetInterrupt(spi, ADXL345_INT_SINGLE_TAP_BIT, RESET);
+	
+}
+
+void adxl345_DoubleTapINT(SPI_HandleTypeDef *spi, uint8_t status) {
+
+	if(status)
+		adxl345_SetInterrupt(spi, ADXL345_INT_DOUBLE_TAP_BIT, SET);
+	else
+		adxl345_SetInterrupt(spi, ADXL345_INT_DOUBLE_TAP_BIT, RESET);
+	
+}
+
+void adxl345_FreeFallINT(SPI_HandleTypeDef *spi, uint8_t status) {
+
+	if(status)
+		adxl345_SetInterrupt(spi, ADXL345_INT_FREE_FALL_BIT, SET);
+	else
+		adxl345_SetInterrupt(spi, ADXL345_INT_FREE_FALL_BIT, RESET);
+	
+}
+
+void adxl345_ActivityINT(SPI_HandleTypeDef *spi, uint8_t status) {
+
+	if(status)
+		adxl345_SetInterrupt(spi, ADXL345_INT_ACTIVITY_BIT , SET);
+	else
+		adxl345_SetInterrupt(spi, ADXL345_INT_ACTIVITY_BIT, RESET);
+	
+}
+
+void adxl345_InactivityINT(SPI_HandleTypeDef *spi, uint8_t status) {
+
+	if(status)
+		adxl345_SetInterrupt(spi, ADXL345_INT_INACTIVITY_BIT , SET);
+	else
+		adxl345_SetInterrupt(spi, ADXL345_INT_INACTIVITY_BIT, RESET);
+	
+}
+
+//Istenen registerin istenen bitini birlemek veya sifirlamak için kullanilan method
+void adxl345_SetRegisterBit(SPI_HandleTypeDef *spi,  uint8_t reg, uint8_t bit_pos, uint8_t state) {
+
+	uint8_t *reg_val;
+	
+	adxl345_Read(*spi, reg, reg_val, 1);
+	
+	if(state) {
+	
+		*reg_val |= (1 << bit_pos);
+	
+	} else {
+		
+		*reg_val &= ~(1 << bit_pos);
+	
+	}
+	
+	adxl345_Write(*spi, reg, reg_val, 1);
+
+}
+
+//Istenen registerin istenen bitinin durumunu ögrenmek için kullanilan method
+uint8_t adxl345_GetRegisterBit(SPI_HandleTypeDef *spi,  uint8_t reg, uint8_t bit_pos) {
+
+	uint8_t *reg_val;
+	
+	adxl345_Read(*spi, reg, reg_val, 1);
+	
+	return ((*reg_val >> bit_pos) & 1);
+
+} 
+
+
